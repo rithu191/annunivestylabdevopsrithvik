@@ -1,12 +1,24 @@
 pipeline {
     agent any
 
-    tools {
-        jdk 'JDK 17'
-        maven 'Maven 3'
-    }
-
     stages {
+        stage('Environment') {
+            steps {
+                sh '''
+                    set -eu
+                    command -v java
+                    command -v mvn
+                    java -version
+                    mvn -version
+                    java_major="$(java -version 2>&1 | sed -n 's/.*version "\([^"]*\)".*/\1/p' | cut -d. -f1)"
+                    if [ "$java_major" = "1" ]; then
+                        java_major="$(java -version 2>&1 | sed -n 's/.*version "1\.\([0-9]*\).*/\1/p')"
+                    fi
+                    test "$java_major" -ge 17
+                '''
+            }
+        }
+
         stage('Build') {
             steps {
                 sh 'mvn -B clean compile'
